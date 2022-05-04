@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import { User } from 'data/models';
 import { getRepository } from 'typeorm';
 import { NotFound } from 'server/utils/errors';
@@ -35,24 +34,6 @@ export default class UserRepository {
       }
     } else if (email) select.where('user.email = :email', { email });
     return select.getOne();
-  }
-
-  static async verifyPassword(email: string, password: string): Promise<User> {
-    const user: User = await this.getWithPasswordAndSalt(null, email);
-    if (!user) throw new NotFound(`User with email ${email} not found`);
-    return new Promise((resolve, reject) => {
-      crypto.pbkdf2(password, user.salt, 310000, 64, 'sha512', (error, hashed) => {
-        if (error) {
-          return reject();
-        }
-        if (
-          !crypto.timingSafeEqual(Buffer.from(user.password), Buffer.from(hashed.toString('hex')))
-        ) {
-          return reject();
-        }
-        return resolve(user);
-      });
-    });
   }
 
   static async destroy(destroyBody: {
